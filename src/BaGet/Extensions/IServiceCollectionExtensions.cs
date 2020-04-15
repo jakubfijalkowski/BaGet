@@ -1,7 +1,9 @@
 using System;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Reflection;
+using System.Text;
 using BaGet.Aliyun;
 using BaGet.Aliyun.Configuration;
 using BaGet.Aliyun.Extensions;
@@ -371,6 +373,14 @@ namespace BaGet.Extensions
 
                 client.DefaultRequestHeaders.Add("User-Agent", $"{assemblyName}/{assemblyVersion}");
                 client.Timeout = TimeSpan.FromSeconds(options.Mirror.PackageDownloadTimeoutSeconds);
+
+                var mirrorOpts = provider.GetRequiredService<IOptions<MirrorOptions>>();
+                if (mirrorOpts.Value.Username != null && mirrorOpts.Value.Password != null)
+                {
+                    var basic = $"{mirrorOpts.Value.Username}:{mirrorOpts.Value.Password}";
+                    basic = Convert.ToBase64String(Encoding.ASCII.GetBytes(basic));
+                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Authorization", basic);
+                }
 
                 return client;
             });
